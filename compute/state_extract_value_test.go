@@ -12,20 +12,20 @@ func Test_extractValueState_toggle(t *testing.T) {
 
 	tests := []struct {
 		name string
-		psm  *ParseStateMachine
+		psm  *parseStateMachine
 
 		expectedCurrentState parseState
 		expectedKey          string
 	}{
 		{
 			name:                 "empty key",
-			psm:                  NewParseStateMachine("SET"),
+			psm:                  newParseStateMachine("SET"),
 			expectedCurrentState: tErrState,
 		},
 		{
 			name: "op set. valid key",
-			psm: func() *ParseStateMachine {
-				psm := NewParseStateMachine("SET FOO BAR")
+			psm: func() *parseStateMachine {
+				psm := newParseStateMachine("SET FOO BAR")
 				psm.operationType = "SET"
 				psm.parsedData.OpType = model.OpTypeSet
 				psm.key = "FOO"
@@ -36,8 +36,8 @@ func Test_extractValueState_toggle(t *testing.T) {
 		},
 		{
 			name: "op get. valid key",
-			psm: func() *ParseStateMachine {
-				psm := NewParseStateMachine("GET FOO")
+			psm: func() *parseStateMachine {
+				psm := newParseStateMachine("GET FOO")
 				psm.operationType = "GET"
 				psm.parsedData.OpType = model.OpTypeGet
 				psm.key = "FOO"

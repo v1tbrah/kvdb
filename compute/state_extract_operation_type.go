@@ -8,7 +8,7 @@ import (
 
 type extractOperationTypeState struct{}
 
-func (eot extractOperationTypeState) toggle(psm *ParseStateMachine) {
+func (eot extractOperationTypeState) toggle(psm *parseStateMachine) {
 	switch model.OpType(psm.operationType) {
 	case model.OpTypeSet:
 		psm.parsedData.OpType = model.OpTypeSet

@@ -12,20 +12,20 @@ func Test_extractOperationTypeState_toggle(t *testing.T) {
 
 	tests := []struct {
 		name string
-		psm  *ParseStateMachine
+		psm  *parseStateMachine
 
 		expectedCurrentState parseState
 		expectedOpType       model.OpType
 	}{
 		{
 			name:                 "invalid op type",
-			psm:                  NewParseStateMachine("SED"),
+			psm:                  newParseStateMachine("SED"),
 			expectedCurrentState: tErrState,
 		},
 		{
 			name: "SET op type",
-			psm: func() *ParseStateMachine {
-				psm := NewParseStateMachine("SET")
+			psm: func() *parseStateMachine {
+				psm := newParseStateMachine("SET")
 				psm.operationType = "SET"
 				return psm
 			}(),
@@ -34,8 +34,8 @@ func Test_extractOperationTypeState_toggle(t *testing.T) {
 		},
 		{
 			name: "GET op type",
-			psm: func() *ParseStateMachine {
-				psm := NewParseStateMachine("GET")
+			psm: func() *parseStateMachine {
+				psm := newParseStateMachine("GET")
 				psm.operationType = "GET"
 				return psm
 			}(),
@@ -44,8 +44,8 @@ func Test_extractOperationTypeState_toggle(t *testing.T) {
 		},
 		{
 			name: "DELETE op type",
-			psm: func() *ParseStateMachine {
-				psm := NewParseStateMachine("DELETE")
+			psm: func() *parseStateMachine {
+				psm := newParseStateMachine("DELETE")
 				psm.operationType = "DELETE"
 				return psm
 			}(),

@@ -9,7 +9,7 @@ import (
 
 type extractKeyState struct{}
 
-func (ek extractKeyState) toggle(psm *ParseStateMachine) {
+func (ek extractKeyState) toggle(psm *parseStateMachine) {
 	if strings.TrimSpace(psm.key) == "" {
 		psm.currentState = errorState{}
 		psm.parsingError = errors.New("key must have one or more non space symbol")

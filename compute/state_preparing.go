@@ -9,7 +9,7 @@ import (
 
 type preparingState struct{}
 
-func (v preparingState) toggle(psm *ParseStateMachine) {
+func (v preparingState) toggle(psm *parseStateMachine) {
 	components := strings.SplitN(psm.dataToParse, " ", 2)
 	if len(components) < 2 {
 		psm.parsingError = errors.New("query must contain operation and key, separated by space ' '")
