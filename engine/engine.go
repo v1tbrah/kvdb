@@ -10,8 +10,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/v1tbrah/kvdb/compute"
 	"github.com/v1tbrah/kvdb/model"
+	"github.com/v1tbrah/kvdb/parse"
 )
 
 type storage interface {
@@ -112,7 +112,7 @@ func (e *Engine) handleIncomingRequests(conn net.Conn) {
 }
 
 func (e *Engine) processInputData(inputData string) (out string, err error) {
-	parsedData, err := compute.ParseData(inputData)
+	parsedData, err := parse.ParseData(inputData)
 	if err != nil {
 		return "", err
 	}

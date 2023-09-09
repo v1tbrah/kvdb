@@ -1,4 +1,4 @@
-package compute
+package parse
 
 import (
 	"github.com/v1tbrah/kvdb/model"

@@ -1,4 +1,4 @@
-package compute
+package parse
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/v1tbrah/kvdb/model"
 )
 
-func Test_extractValueState_toggle(t *testing.T) {
+func Test_extractKeyState_toggle(t *testing.T) {
 	tErrState := errorState{}
 
 	tests := []struct {
