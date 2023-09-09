@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/v1tbrah/kvdb/engine"
@@ -13,9 +15,11 @@ import (
 )
 
 func main() {
-	host, port := "localhost", "4321"
+	host, port, logLvl := "localhost", "4321", int(slog.LevelInfo)
 	flag.StringVar(&host, "h", host, "host tcp server")
 	flag.StringVar(&port, "p", port, "port tcp server")
+	flag.IntVar(&logLvl, "l", logLvl, "log lvl")
+	flag.Parse()
 
 	if envHost := os.Getenv("HOST"); envHost != "" {
 		host = envHost
@@ -23,6 +27,15 @@ func main() {
 	if envPort := os.Getenv("PORT"); envPort != "" {
 		port = envPort
 	}
+	if envLogLvlStr := os.Getenv("LOGLVL"); envLogLvlStr != "" {
+		envLogLvl, err := strconv.Atoi(envLogLvlStr)
+		if err != nil {
+			log.Fatalln("invalid log lvl")
+		}
+		logLvl = envLogLvl
+	}
+
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.Level(logLvl)})))
 
 	newStorage := storage.NewStorage()
 
