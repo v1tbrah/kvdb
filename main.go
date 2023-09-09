@@ -2,44 +2,28 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
+	"github.com/v1tbrah/kvdb/config"
 	"github.com/v1tbrah/kvdb/engine"
 	"github.com/v1tbrah/kvdb/storage"
 )
 
 func main() {
-	host, port, logLvl := "localhost", "4321", int(slog.LevelInfo)
-	flag.StringVar(&host, "h", host, "host tcp server")
-	flag.StringVar(&port, "p", port, "port tcp server")
-	flag.IntVar(&logLvl, "l", logLvl, "log lvl")
-	flag.Parse()
-
-	if envHost := os.Getenv("HOST"); envHost != "" {
-		host = envHost
-	}
-	if envPort := os.Getenv("PORT"); envPort != "" {
-		port = envPort
-	}
-	if envLogLvlStr := os.Getenv("LOGLVL"); envLogLvlStr != "" {
-		envLogLvl, err := strconv.Atoi(envLogLvlStr)
-		if err != nil {
-			log.Fatalln("invalid log lvl")
-		}
-		logLvl = envLogLvl
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("parse config: %v", err)
 	}
 
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.Level(logLvl)})))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: cfg.LogLvl})))
 
 	newStorage := storage.NewStorage()
 
-	newEngine, err := engine.NewEngine(host, port, newStorage)
+	newEngine, err := engine.NewEngine(cfg.Server.Host, cfg.Server.Port, newStorage)
 	if err != nil {
 		slog.Error("new engine", "error", err)
 		os.Exit(1)
