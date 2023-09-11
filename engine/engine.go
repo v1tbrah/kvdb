@@ -102,11 +102,13 @@ func (e *Engine) handleIncomingRequests(conn net.Conn) {
 			if errWr != nil {
 				slog.Error("io.WriteString", slog.String("errWr", errWr.Error()), slog.String("err", err.Error()))
 			}
+			continue
 		}
 
 		_, errWr := io.WriteString(conn, out+"\n")
 		if errWr != nil {
 			slog.Error("io.WriteString", slog.String("errWr", errWr.Error()), slog.String("out", out))
+			continue
 		}
 	}
 }
