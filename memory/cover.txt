@@ -1,0 +1,26 @@
+mode: atomic
+github.com/v1tbrah/kvdb/memory/memory.go:27.47,29.29 2 2
+github.com/v1tbrah/kvdb/memory/memory.go:29.29,31.3 1 20
+github.com/v1tbrah/kvdb/memory/memory.go:33.2,34.29 2 2
+github.com/v1tbrah/kvdb/memory/memory.go:34.29,36.3 1 20
+github.com/v1tbrah/kvdb/memory/memory.go:38.2,49.10 3 2
+github.com/v1tbrah/kvdb/memory/memory.go:52.44,57.29 3 2000000
+github.com/v1tbrah/kvdb/memory/memory.go:57.29,59.3 1 2000000
+github.com/v1tbrah/kvdb/memory/memory.go:62.45,67.30 3 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:67.30,69.3 1 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:71.2,71.14 1 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:74.68,79.30 3 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:79.30,81.3 1 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:83.2,83.23 1 3000000
+github.com/v1tbrah/kvdb/memory/memory.go:86.38,91.29 3 500000
+github.com/v1tbrah/kvdb/memory/memory.go:91.29,93.3 1 500000
+github.com/v1tbrah/kvdb/memory/memory.go:98.52,99.39 1 2
+github.com/v1tbrah/kvdb/memory/memory.go:99.39,103.38 2 2
+github.com/v1tbrah/kvdb/memory/memory.go:103.38,104.26 1 2
+github.com/v1tbrah/kvdb/memory/memory.go:104.26,105.48 1 2
+github.com/v1tbrah/kvdb/memory/memory.go:105.48,108.33 2 0
+github.com/v1tbrah/kvdb/memory/memory.go:108.33,114.7 3 0
+github.com/v1tbrah/kvdb/memory/memory.go:119.4,119.50 1 2
+github.com/v1tbrah/kvdb/memory/memory.go:124.47,126.2 1 8500000
+github.com/v1tbrah/kvdb/memory/memory.go:128.44,132.2 3 2500000
+github.com/v1tbrah/kvdb/memory/memory.go:134.45,138.2 3 6000000

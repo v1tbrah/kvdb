@@ -2,37 +2,43 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/v1tbrah/kvdb/config"
-	"github.com/v1tbrah/kvdb/engine"
-	"github.com/v1tbrah/kvdb/storage"
+	"github.com/v1tbrah/kvdb/dbengine"
+	"github.com/v1tbrah/kvdb/memory"
+	"github.com/v1tbrah/kvdb/server"
 )
 
 func main() {
 	cfg, err := config.New()
 	if err != nil {
-		log.Fatalf("parse config: %v", err)
+		slog.Error("config.New", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: cfg.LogLvl})))
 
-	newStorage := storage.NewStorage()
-
-	newEngine, err := engine.NewEngine(cfg.Server.Host, cfg.Server.Port, newStorage)
+	newDBEngine, err := dbengine.New(memory.New[string, string]())
 	if err != nil {
-		slog.Error("new engine", "error", err)
+		slog.Error("dbengine.New", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
+	newServer, err := server.New(cfg.Server.Host, cfg.Server.Port, newDBEngine)
+	if err != nil {
+		slog.Error("server.New", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	if err = newEngine.Launch(ctx); err != nil && err != context.Canceled {
-		slog.Error("new engine. Launch", "error", err)
+	if err = newServer.Launch(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		cancel()
+		slog.Error("newServer.Launch", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 	cancel()

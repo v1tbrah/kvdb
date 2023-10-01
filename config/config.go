@@ -19,12 +19,14 @@ import (
 // PORT - port daemon
 // LOG_LVL - log level (debug, info, warn, error)
 type Config struct {
-	Server struct {
-		Port string
-		Host string
-	}
-
+	Server
 	LogLvl slog.Level
+	// TODO add log format: console, json
+}
+
+type Server struct {
+	Port string
+	Host string
 }
 
 func New() (Config, error) {
