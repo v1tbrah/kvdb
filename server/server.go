@@ -8,27 +8,29 @@ import (
 	"log/slog"
 	"net"
 	"strings"
+
+	"github.com/v1tbrah/kvdb/txctx"
 )
 
-type engine interface {
-	Process(in string) (out string, err error)
+type dbengine interface {
+	Process(ctx context.Context, in string) (out string, err error)
 }
 
 type Server struct {
 	host, port string
 
-	engine engine
+	dbengine dbengine
 }
 
-func New(host, port string, engine engine) (*Server, error) {
-	if engine == nil {
-		return nil, errors.New("engine is nil")
+func New(host, port string, dbengine dbengine) (*Server, error) {
+	if dbengine == nil {
+		return nil, errors.New("dbengine is nil")
 	}
 
 	return &Server{
-		host:   host,
-		port:   port,
-		engine: engine,
+		host:     host,
+		port:     port,
+		dbengine: dbengine,
 	}, nil
 }
 
@@ -51,7 +53,7 @@ func (e *Server) Launch(ctx context.Context) error {
 				continue
 			}
 
-			go e.handleIncomingRequests(conn)
+			go e.handleIncomingRequests(ctx, conn)
 		}
 	}()
 
@@ -64,7 +66,7 @@ func (e *Server) Launch(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (e *Server) handleIncomingRequests(conn net.Conn) {
+func (e *Server) handleIncomingRequests(ctx context.Context, conn net.Conn) {
 	defer func() {
 		if err := conn.Close(); err != nil {
 			slog.Error("conn.Close", slog.String("error", err.Error()))
@@ -88,19 +90,20 @@ func (e *Server) handleIncomingRequests(conn net.Conn) {
 		cleanedLine := strings.TrimRight(line, "\r\n")
 		slog.Debug("received line", slog.String("line", cleanedLine))
 
-		out, err := e.engine.Process(cleanedLine)
+		ctxTx, ctxTxCancel := context.WithCancel(ctx)
+		ctxTx = txctx.CtxWithTx(ctxTx)
+		out, err := e.dbengine.Process(ctxTx, cleanedLine)
 		if err != nil {
-			_, errWr := io.WriteString(conn, err.Error()+"\n")
-			if errWr != nil {
+			if _, errWr := io.WriteString(conn, err.Error()+"\n"); errWr != nil {
 				slog.Error("io.WriteString", slog.String("errWr", errWr.Error()), slog.String("err", err.Error()))
 			}
+			ctxTxCancel()
 			continue
 		}
 
-		_, errWr := io.WriteString(conn, out+"\n")
-		if errWr != nil {
+		if _, errWr := io.WriteString(conn, out+"\n"); errWr != nil {
 			slog.Error("io.WriteString", slog.String("errWr", errWr.Error()), slog.String("out", out))
-			continue
 		}
+		ctxTxCancel()
 	}
 }

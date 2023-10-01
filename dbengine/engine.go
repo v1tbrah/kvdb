@@ -1,10 +1,12 @@
 package dbengine
 
 import (
+	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 
 	"github.com/v1tbrah/kvdb/dbengine/parser"
+	"github.com/v1tbrah/kvdb/txctx"
 )
 
 type memory interface {
@@ -27,22 +29,29 @@ func New(memory memory) (*Engine, error) {
 	}, nil
 }
 
-func (e *Engine) Process(in string) (out string, err error) {
+func (e *Engine) Process(ctx context.Context, in string) (out string, err error) {
 	if len(in) == 0 {
-		return out, errors.New("empty input")
+		slog.WarnContext(ctx, "empty input",
+			slog.String("tx", txctx.Tx(ctx)))
+		return out, errors.New("invalid input")
 	}
 
 	parsed := parser.Compute(in)
 	if len(parsed) == 0 {
-		return out, errors.New("empty parsed input")
+		slog.WarnContext(ctx, "empty parsed input",
+			slog.String("tx", txctx.Tx(ctx)), slog.String("input", in))
+		return out, errors.New("invalid input")
 	}
 
-	executableOperation, err := e.analyzeOperation(parsed)
+	executableOperationFn, err := e.analyzeOperation(parsed)
 	if err != nil {
-		return out, fmt.Errorf("e.analyzeOperation: %w", err)
+		slog.WarnContext(ctx, "analyzeOperation",
+			slog.String("tx", txctx.Tx(ctx)), slog.Any("parsed", parsed),
+			slog.String("error", err.Error()))
+		return out, errors.New("invalid input")
 	}
 
-	out = executableOperation()
+	out = executableOperationFn()
 
 	return out, nil
 }
