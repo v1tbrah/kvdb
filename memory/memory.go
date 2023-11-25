@@ -93,7 +93,7 @@ func (m *Memory[K, V]) Delete(key K) {
 	})
 }
 
-// startMemoryCleanerProcess cleans memory. It's need, cause map in Go don't release completely memory when delete.
+// startMemoryCleanerProcess cleans memory. It's need, cause map in Go don't release completely memory when deleted.
 // see more: https://github.com/golang/go/issues/20135
 func (m *Memory[K, V]) startMemoryCleanerProcess() {
 	m.onceMemoryCleanerProcess.Do(func() {

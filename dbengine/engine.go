@@ -15,17 +15,26 @@ type memory interface {
 	Delete(key string)
 }
 
-type Engine struct {
-	memory memory
+type wal interface {
+	Save(ctx context.Context, in string) error
 }
 
-func New(memory memory) (*Engine, error) {
+type Engine struct {
+	memory memory
+	wal    wal
+}
+
+func New(memory memory, wal wal) (*Engine, error) {
 	if memory == nil {
 		return nil, errors.New("memory is nil")
+	}
+	if wal == nil {
+		return nil, errors.New("wal is nil")
 	}
 
 	return &Engine{
 		memory: memory,
+		wal:    wal,
 	}, nil
 }
 
@@ -36,6 +45,7 @@ func (e *Engine) Process(ctx context.Context, in string) (out string, err error)
 		return out, errors.New("invalid input")
 	}
 
+	// parse input tokens
 	parsed := parser.Compute(in)
 	if len(parsed) == 0 {
 		slog.WarnContext(ctx, "empty parsed input",
@@ -43,7 +53,8 @@ func (e *Engine) Process(ctx context.Context, in string) (out string, err error)
 		return out, errors.New("invalid input")
 	}
 
-	executableOperationFn, err := e.analyzeOperation(parsed)
+	// analyze executable operation and operands
+	executableOperationFn, opType, err := e.analyzeOperation(parsed)
 	if err != nil {
 		slog.WarnContext(ctx, "analyzeOperation",
 			slog.String("tx", txctx.Tx(ctx)), slog.Any("parsed", parsed),
@@ -51,6 +62,17 @@ func (e *Engine) Process(ctx context.Context, in string) (out string, err error)
 		return out, errors.New("invalid input")
 	}
 
+	// save only write operations to WAL (write ahead log)
+	if opType == OpTypeSet || opType == OpTypeDelete {
+		if err = e.wal.Save(ctx, in); err != nil {
+			slog.WarnContext(ctx, "wal.Save",
+				slog.String("tx", txctx.Tx(ctx)), slog.String("in", in),
+				slog.String("error", err.Error()))
+			return out, errors.New("internal error") // TODO
+		}
+	}
+
+	// execute in-mem operation
 	out = executableOperationFn()
 
 	return out, nil

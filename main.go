@@ -12,6 +12,7 @@ import (
 	"github.com/v1tbrah/kvdb/dbengine"
 	"github.com/v1tbrah/kvdb/memory"
 	"github.com/v1tbrah/kvdb/server"
+	"github.com/v1tbrah/kvdb/wal"
 )
 
 func main() {
@@ -23,7 +24,13 @@ func main() {
 
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: cfg.LogLvl})))
 
-	newDBEngine, err := dbengine.New(memory.New[string, string]())
+	newWAL, err := wal.New()
+	if err != nil {
+		slog.Error("wal.New", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
+	newDBEngine, err := dbengine.New(memory.New[string, string](), newWAL)
 	if err != nil {
 		slog.Error("dbengine.New", slog.String("error", err.Error()))
 		os.Exit(1)
