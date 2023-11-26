@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const maxWALFileSize int = 16 * 1e6 // 16Mb
+
 type fInfo struct {
 	fName string
 	fNum  int

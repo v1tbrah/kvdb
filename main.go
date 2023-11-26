@@ -24,7 +24,7 @@ func main() {
 
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: cfg.LogLvl})))
 
-	newWAL, err := wal.New()
+	newWAL, err := wal.New(false)
 	if err != nil {
 		slog.Error("wal.New", slog.String("error", err.Error()))
 		os.Exit(1)

@@ -4,19 +4,26 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 )
 
 const (
-	symbolBetweenStartAndSuffixNamesWALFiles     = "_"
-	maxWALFileSize                           int = 16 * 1e6 // 16Mb
+	symbolBetweenStartAndSuffixNamesWALFiles = "_"
 )
 
 type WAL struct {
 	currWALFile     *os.File
 	currWALFileSize int
+
+	isSyncWrite bool
+
+	operationsBuff             []string
+	operationsBuffMu           *sync.Mutex
+	operationsBuffSize         int
+	operationsBuffFlushTrigger chan struct{}
 }
 
-func New() (*WAL, error) {
+func New(isSyncWrite bool) (*WAL, error) {
 	lastWALFile, err := findLastWALFile()
 	if err != nil {
 		return nil, fmt.Errorf("find last wal file: %w", err)
@@ -29,13 +36,36 @@ func New() (*WAL, error) {
 
 	go startProcessMergeWALFiles()
 
-	return &WAL{
+	w := &WAL{
 		currWALFile:     lastWALFile,
 		currWALFileSize: int(stat.Size()),
-	}, nil
+
+		isSyncWrite: isSyncWrite,
+
+		operationsBuff:             make([]string, 0),
+		operationsBuffMu:           new(sync.Mutex),
+		operationsBuffSize:         0,
+		operationsBuffFlushTrigger: make(chan struct{}),
+	}
+
+	if !isSyncWrite {
+		go w.startProcessingBuff()
+	}
+
+	return w, nil
 }
 
-func (w *WAL) Save(_ context.Context, op string) error {
+func (w *WAL) Save(ctx context.Context, op string) error {
+	if w.isSyncWrite {
+		return w.saveSync(ctx, op)
+	}
+
+	w.addOpToBuff(ctx, op)
+
+	return nil
+}
+
+func (w *WAL) saveSync(_ context.Context, op string) error {
 	// TODO нужно ли здесь блокировку делать???
 	if w.currWALFileSize+len(op)+len("\n") > maxWALFileSize {
 		newWALFile, err := prepareNewWALFile(w.currWALFile.Name())
