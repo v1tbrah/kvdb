@@ -25,11 +25,6 @@ func startProcessMergeWALFiles() {
 	}
 }
 
-type fInfo struct {
-	fName string
-	fNum  int
-}
-
 func mergeWALFiles() error {
 	dirWithWalFiles, err := os.ReadDir(".")
 	if err != nil {

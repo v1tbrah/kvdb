@@ -13,7 +13,7 @@ import (
 )
 
 type dbengine interface {
-	Process(ctx context.Context, in string) (out string, err error)
+	Process(ctx context.Context, in string, withSaveToWAL bool) (out string, err error)
 }
 
 type Server struct {
@@ -92,7 +92,7 @@ func (e *Server) handleIncomingRequests(ctx context.Context, conn net.Conn) {
 
 		ctxTx, ctxTxCancel := context.WithCancel(ctx)
 		ctxTx = txctx.CtxWithTx(ctxTx)
-		out, err := e.dbengine.Process(ctxTx, cleanedLine)
+		out, err := e.dbengine.Process(ctxTx, cleanedLine, true)
 		if err != nil {
 			if _, errWr := io.WriteString(conn, err.Error()+"\n"); errWr != nil {
 				slog.Error("io.WriteString", slog.String("errWr", errWr.Error()), slog.String("err", err.Error()))

@@ -4,9 +4,50 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
+
+type fInfo struct {
+	fName string
+	fNum  int
+}
+
+func (w *WAL) GetNamesWALFiles(withOrderByNumberASC bool) ([]string, error) {
+	dirWithWalFiles, err := os.ReadDir(".")
+	if err != nil {
+		return nil, err
+	}
+
+	allWALFiles := make([]fInfo, 0)
+	for _, f := range dirWithWalFiles {
+		if f.IsDir() {
+			continue
+		}
+
+		var n int
+		if n, err = getWALFileNumber(f.Name()); err == nil {
+			allWALFiles = append(allWALFiles, fInfo{
+				fName: f.Name(),
+				fNum:  n,
+			})
+		}
+	}
+
+	if withOrderByNumberASC {
+		sort.Slice(allWALFiles, func(i, j int) bool {
+			return allWALFiles[i].fNum < allWALFiles[j].fNum
+		})
+	}
+
+	result := make([]string, 0, len(allWALFiles))
+	for _, f := range allWALFiles {
+		result = append(result, f.fName)
+	}
+
+	return result, nil
+}
 
 func findLastWALFile() (*os.File, error) {
 	dirWithWalFiles, err := os.ReadDir(".")

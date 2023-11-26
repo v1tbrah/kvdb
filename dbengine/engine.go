@@ -1,9 +1,12 @@
 package dbengine
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/v1tbrah/kvdb/dbengine/parser"
 	"github.com/v1tbrah/kvdb/txctx"
@@ -17,6 +20,7 @@ type memory interface {
 
 type wal interface {
 	Save(ctx context.Context, in string) error
+	GetNamesWALFiles(withOrderByNumberASC bool) ([]string, error)
 }
 
 type Engine struct {
@@ -32,13 +36,26 @@ func New(memory memory, wal wal) (*Engine, error) {
 		return nil, errors.New("wal is nil")
 	}
 
-	return &Engine{
+	names, err := wal.GetNamesWALFiles(true)
+	if err != nil {
+		return nil, err
+	}
+
+	e := &Engine{
 		memory: memory,
 		wal:    wal,
-	}, nil
+	}
+
+	for _, name := range names {
+		if err = e.updateMemoryStateFromFile(name); err != nil {
+			return nil, err
+		}
+	}
+
+	return e, nil
 }
 
-func (e *Engine) Process(ctx context.Context, in string) (out string, err error) {
+func (e *Engine) Process(ctx context.Context, in string, withSaveToWAL bool) (out string, err error) {
 	if len(in) == 0 {
 		slog.WarnContext(ctx, "empty input",
 			slog.String("tx", txctx.Tx(ctx)))
@@ -63,7 +80,7 @@ func (e *Engine) Process(ctx context.Context, in string) (out string, err error)
 	}
 
 	// save only write operations to WAL (write ahead log)
-	if opType == OpTypeSet || opType == OpTypeDelete {
+	if withSaveToWAL && (opType == OpTypeSet || opType == OpTypeDelete) {
 		if err = e.wal.Save(ctx, in); err != nil {
 			slog.WarnContext(ctx, "wal.Save",
 				slog.String("tx", txctx.Tx(ctx)), slog.String("in", in),
@@ -76,4 +93,21 @@ func (e *Engine) Process(ctx context.Context, in string) (out string, err error)
 	out = executableOperationFn()
 
 	return out, nil
+}
+
+func (e *Engine) updateMemoryStateFromFile(fileName string) error {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return fmt.Errorf("open file '%s': %w", fileName, err)
+	}
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		if _, err = e.Process(context.Background(), s.Text(), false); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
