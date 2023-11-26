@@ -49,5 +49,10 @@ func main() {
 		os.Exit(1)
 	}
 	cancel()
+
+	if err = newWAL.Close(ctx); err != nil {
+		slog.Error("newWAL.Close", slog.String("error", err.Error()))
+	}
+
 	slog.Info("tcp server stopped")
 }

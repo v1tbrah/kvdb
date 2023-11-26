@@ -88,3 +88,17 @@ func (w *WAL) saveSync(_ context.Context, op string) error {
 
 	return nil
 }
+
+func (w *WAL) Close(ctx context.Context) error {
+	if !w.isSyncWrite {
+		w.operationsBuffMu.Lock()
+		buffCopy := make([]string, len(w.operationsBuff))
+		copy(buffCopy, w.operationsBuff)
+		w.operationsBuff = w.operationsBuff[:0]
+		w.operationsBuffSize = 0
+		w.flush(ctx, buffCopy)
+		w.operationsBuffMu.Unlock()
+	}
+
+	return nil
+}

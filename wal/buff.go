@@ -45,7 +45,7 @@ func (w *WAL) startProcessingBuff() {
 		w.operationsBuffSize = 0
 		w.operationsBuffMu.Unlock()
 
-		w.flush(buffCopy)
+		w.flush(context.TODO(), buffCopy)
 
 		if !triggeredByTicker {
 			ticker.Reset(buffFlushInterval)
@@ -53,9 +53,9 @@ func (w *WAL) startProcessingBuff() {
 	}
 }
 
-func (w *WAL) flush(operations []string) {
+func (w *WAL) flush(ctx context.Context, operations []string) {
 	for _, op := range operations {
-		if err := w.saveSync(context.Background(), op); err != nil {
+		if err := w.saveSync(ctx, op); err != nil {
 			slog.Error("w.saveSync", slog.String("op", op), slog.String("err", err.Error()))
 		}
 	}
